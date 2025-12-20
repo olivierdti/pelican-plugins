@@ -1,0 +1,11 @@
+{
+    "id": "catppuccin-theme",
+    "name": "Catppuccin Theme",
+    "author": "Olivier D.",
+    "version": "1.0.0",
+    "description": "Soothing pastel theme for the high-spirited! Catppuccin Mocha flavor.",
+    "category": "theme",
+    "url": "https://github.com/olivierdti/pelican-plugins/tree/main/catppuccin-theme",
+    "namespace": "Olivier\\CatppuccinTheme",
+    "class": "CatppuccinThemePlugin"
+}
