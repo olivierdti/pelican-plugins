@@ -555,7 +555,7 @@ public const CATPPUCCIN_MACCHIATO_RED = [
         return [
             Select::make('flavor')
                 ->label('Default Theme')
-                ->helperText('This theme will be applied by default. Users can choose their own theme in their profile.')
+                ->helperText('This theme will be applied by default. In the future users can choose their own theme in their profile.')
                 ->required()
                 ->options([
                     'mocha' => '🌙 Mocha',
