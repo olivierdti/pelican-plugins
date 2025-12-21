@@ -5,6 +5,7 @@ namespace Olivier\EnhancedServerSorter\Providers;
 use App\Enums\CustomizationKey;
 use App\Filament\App\Resources\Servers\Pages\ListServers as AppListServers;
 use App\Models\Server;
+use Filament\Tables\Columns\Column;
 use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -31,9 +32,6 @@ class EnhancedServerSorterServiceProvider extends ServiceProvider
             }
 
             $usingGrid = user()?->getCustomization(CustomizationKey::DashboardLayout) === 'grid';
-            if ($usingGrid) {
-                return;
-            }
 
             $table
                 ->groups([

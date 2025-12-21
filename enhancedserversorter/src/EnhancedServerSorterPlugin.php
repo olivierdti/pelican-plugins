@@ -10,6 +10,7 @@ use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Panel;
 use Illuminate\Support\Collection;
@@ -63,6 +64,7 @@ class EnhancedServerSorterPlugin implements Plugin
                     Repeater::make('folders')
                         ->label('Folders')
                         ->default(fn () => $this->loadFolders())
+                        ->live()
                         ->schema([
                             Hidden::make('id'),
                             TextInput::make('name')
@@ -74,7 +76,9 @@ class EnhancedServerSorterPlugin implements Plugin
                                 ->multiple()
                                 ->options($servers)
                                 ->searchable()
-                                ->preload(),
+                                ->preload()
+                                ->live()
+                                ->disableOptionsWhenSelectedInSiblingRepeaterItems(),
                         ])
                         ->collapsed()
                         ->reorderableWithButtons()
@@ -89,6 +93,35 @@ class EnhancedServerSorterPlugin implements Plugin
                 }
 
                 $folders = collect($data['folders'] ?? []);
+                
+                $allServerIds = [];
+                $duplicates = [];
+                
+                foreach ($folders as $folder) {
+                    $serverIds = $folder['server_ids'] ?? [];
+                    foreach ($serverIds as $serverId) {
+                        if (in_array($serverId, $allServerIds)) {
+                            $duplicates[] = $serverId;
+                        }
+                        $allServerIds[] = $serverId;
+                    }
+                }
+                
+                if (!empty($duplicates)) {
+                    $serverNames = user()?->accessibleServers()
+                        ->whereIn('servers.id', array_unique($duplicates))
+                        ->pluck('name')
+                        ->join(', ');
+                    
+                    Notification::make()
+                        ->title('Duplicate servers detected')
+                        ->body("The following servers are assigned to multiple folders: {$serverNames}")
+                        ->danger()
+                        ->send();
+                    
+                    return;
+                }
+
                 $this->persistFolders($folders, $user->id);
 
                 Notification::make()
