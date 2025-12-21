@@ -9,6 +9,7 @@ use Filament\Tables\Columns\Column;
 use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
 class EnhancedServerSorterServiceProvider extends ServiceProvider
@@ -24,6 +25,10 @@ class EnhancedServerSorterServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if (!\Illuminate\Support\Facades\Schema::hasTable('enhanced_server_folder_server')) {
+            return;
+        }
+
         Table::configureUsing(function (Table $table): void {
             $component = $table->getLivewire();
 
