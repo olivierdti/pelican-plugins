@@ -29,11 +29,6 @@ class EnhancedServerSorterPlugin implements Plugin
 
     public function register(Panel $panel): void
     {
-        if (!self::$providerRegistered) {
-            app()->register(EnhancedServerSorterServiceProvider::class);
-            self::$providerRegistered = true;
-        }
-
         if ($panel->getId() !== 'app') {
             return;
         }
@@ -47,6 +42,13 @@ class EnhancedServerSorterPlugin implements Plugin
     public function boot(Panel $panel): void
     {
         //
+    }
+
+    public function getServiceProviders(): array
+    {
+        return [
+            EnhancedServerSorterServiceProvider::class,
+        ];
     }
 
     private function makeManageFoldersAction(): Action
