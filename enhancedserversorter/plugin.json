@@ -2,7 +2,7 @@
     "id": "enhancedserversorter",
     "name": "Enhanced Server Sorter",
     "author": "Olivier D.",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Organize servers into per-user folders and group them on the server list.",
     "category": "plugin",
     "url": "https://github.com/olivierdti/pelican-plugins/tree/main/enhancedserversorter",
