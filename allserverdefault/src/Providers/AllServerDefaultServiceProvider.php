@@ -18,50 +18,32 @@ class AllServerDefaultServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        Livewire::listen('component.hydrate', function ($component) {
-            if ($component instanceof ListServers) {
-                $defaultTab = config('allserverdefault.default_tab', 'all');
-                
-                if (!request()->has('tab')) {
-                    $component->activeTab = $defaultTab;
-                }
+        $defaultTab = config('allserverdefault.default_tab', 'all');
+
+        Livewire::listen('component.mount', function ($component) use ($defaultTab) {
+            if ($component instanceof ListServers && !request()->has('tab')) {
+                $component->activeTab = $defaultTab;
             }
         });
 
         FilamentView::registerRenderHook(
             PanelsRenderHook::BODY_START,
-            fn () => Blade::render(<<<'HTML'
-                <script>
-                    (function() {
-                        const defaultTab = '{{ config("allserverdefault.default_tab", "all") }}';
-                        
-                        document.addEventListener('click', function(e) {
-                            const link = e.target.closest('a[href]');
-                            if (!link) return;
-                            
-                            const href = link.getAttribute('href');
-                            if (!href) return;
-                            
-                            if (href === '/' || href === window.location.origin + '/' || href.match(/^\/$/) || 
-                                (href.includes(window.location.origin) && href.endsWith('/'))) {
-                                e.preventDefault();
-                                
-                                // Naviguer vers /?tab=all
-                                if (link.hasAttribute('wire:navigate')) {
-                                    Livewire.navigate('/?tab=' + defaultTab);
-                                } else {
-                                    window.location.href = '/?tab=' + defaultTab;
-                                }
+            function () use ($defaultTab) {
+                if (!request()->is('/') || request()->has('tab')) {
+                    return '';
+                }
+
+                return Blade::render(<<<'HTML'
+                    <script>
+                        (function() {
+                            if (window.location.pathname === '/' && !window.location.search.includes('tab=')) {
+                                const url = '/?tab={{ $tab }}';
+                                window.Livewire ? window.Livewire.navigate(url) : window.location.href = url;
                             }
-                        }, true);
-                        
-                        if (window.location.pathname === '/' && !window.location.search.includes('tab=')) {
-                            window.history.replaceState({}, '', '/?tab=' + defaultTab);
-                            window.location.reload();
-                        }
-                    })();
-                </script>
-            HTML)
+                        })();
+                    </script>
+                HTML, ['tab' => $defaultTab]);
+            }
         );
     }
 }
