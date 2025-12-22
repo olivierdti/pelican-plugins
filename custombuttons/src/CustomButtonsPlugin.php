@@ -6,6 +6,8 @@ use App\Contracts\Plugins\HasPluginSettings;
 use Filament\Contracts\Plugin;
 use Filament\Notifications\Notification;
 use Filament\Panel;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Olivier\CustomButtons\Models\CustomButton;
 use Olivier\CustomButtons\Models\CustomSidebarItem;
 
@@ -147,8 +149,24 @@ class CustomButtonsPlugin implements HasPluginSettings, Plugin
     protected function loadButtons(): array
     {
         try {
-            return CustomButton::orderBy('sort')->get()->toArray();
+            if (!Schema::hasTable('custom_buttons')) {
+                return [];
+            }
+            
+            return CustomButton::orderBy('sort')
+                ->get()
+                ->map(fn ($button) => [
+                    'text' => $button->text,
+                    'url' => $button->url,
+                    'icon' => $button->icon,
+                    'color' => $button->color,
+                    'new_tab' => $button->new_tab,
+                    'sort' => $button->sort,
+                    'is_active' => $button->is_active,
+                ])
+                ->toArray();
         } catch (\Exception $e) {
+            Log::error('CustomButtonsPlugin loadButtons error: ' . $e->getMessage());
             return [];
         }
     }
@@ -156,29 +174,104 @@ class CustomButtonsPlugin implements HasPluginSettings, Plugin
     protected function loadSidebarItems(): array
     {
         try {
-            return CustomSidebarItem::orderBy('sort')->get()->toArray();
+            if (!Schema::hasTable('custom_sidebar_items')) {
+                return [];
+            }
+            
+            return CustomSidebarItem::orderBy('sort')
+                ->get()
+                ->map(fn ($item) => [
+                    'label' => $item->label,
+                    'url' => $item->url,
+                    'icon' => $item->icon,
+                    'sort' => $item->sort,
+                    'new_tab' => $item->new_tab,
+                    'is_active' => $item->is_active,
+                ])
+                ->toArray();
         } catch (\Exception $e) {
+            Log::error('CustomButtonsPlugin loadSidebarItems error: ' . $e->getMessage());
             return [];
         }
     }
 
     public function saveSettings(array $data): void
     {
-        CustomButton::truncate();
-        CustomSidebarItem::truncate();
+        try {
+            if (!Schema::hasTable('custom_buttons')) {
+                throw new \Exception('Table custom_buttons does not exist. Please run migrations.');
+            }
+            
+            if (!Schema::hasTable('custom_sidebar_items')) {
+                throw new \Exception('Table custom_sidebar_items does not exist. Please run migrations.');
+            }
 
-        foreach ($data['buttons'] ?? [] as $button) {
-            CustomButton::create($button);
-        }
+            CustomButton::truncate();
+            CustomSidebarItem::truncate();
 
-        foreach ($data['sidebar_items'] ?? [] as $item) {
-            CustomSidebarItem::create($item);
+            foreach ($data['buttons'] ?? [] as $button) {
+                $buttonData = array_intersect_key($button, array_flip([
+                    'text', 'url', 'icon', 'color', 'new_tab', 'sort', 'is_active'
+                ]));
+                
+                if (empty($buttonData['text']) || empty($buttonData['url'])) {
+                    continue;
+                }
+                
+                if (isset($buttonData['new_tab'])) {
+                    $buttonData['new_tab'] = (bool) $buttonData['new_tab'];
+                }
+                if (isset($buttonData['is_active'])) {
+                    $buttonData['is_active'] = (bool) $buttonData['is_active'];
+                }
+                
+                $buttonData['color'] = $buttonData['color'] ?? 'primary';
+                $buttonData['sort'] = $buttonData['sort'] ?? 0;
+                $buttonData['new_tab'] = $buttonData['new_tab'] ?? true;
+                $buttonData['is_active'] = $buttonData['is_active'] ?? true;
+                
+                CustomButton::create($buttonData);
+            }
+
+            foreach ($data['sidebar_items'] ?? [] as $item) {
+                $itemData = array_intersect_key($item, array_flip([
+                    'label', 'url', 'icon', 'sort', 'new_tab', 'is_active'
+                ]));
+                
+                if (empty($itemData['label']) || empty($itemData['url'])) {
+                    continue;
+                }
+                
+                if (isset($itemData['new_tab'])) {
+                    $itemData['new_tab'] = (bool) $itemData['new_tab'];
+                }
+                if (isset($itemData['is_active'])) {
+                    $itemData['is_active'] = (bool) $itemData['is_active'];
+                }
+                
+                $itemData['sort'] = $itemData['sort'] ?? 50;
+                $itemData['new_tab'] = $itemData['new_tab'] ?? false;
+                $itemData['is_active'] = $itemData['is_active'] ?? true;
+                
+                CustomSidebarItem::create($itemData);
+            }
+            
+            Notification::make()
+                ->title('Settings saved')
+                ->success()
+                ->send();
+        } catch (\Exception $e) {
+            Notification::make()
+                ->title('Error saving settings')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+            
+            Log::error('CustomButtonsPlugin saveSettings error: ' . $e->getMessage(), [
+                'exception' => $e,
+                'data' => $data
+            ]);
         }
-        
-        Notification::make()
-            ->title('Settings saved')
-            ->success()
-            ->send();
     }
 
     public static function getButtons()
