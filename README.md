@@ -26,5 +26,5 @@ Create custom buttons in the server-view.
 ## [Enhanced Server Sorter](/enhancedserversorter) <sup><sub>by olivierdti</sub></sup>
 
 A server sorter in the admin dashboard.
-> [!WARNING]
-> This plugin is not ready to use. It has many problems.
+> [!TIP]
+> This plugin is ready to use! It includes default folders and locking features.
