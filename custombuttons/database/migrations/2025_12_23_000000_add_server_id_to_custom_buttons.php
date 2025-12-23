@@ -8,9 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('custom_buttons')) {
+            return;
+        }
+
         Schema::table('custom_buttons', function (Blueprint $table) {
-            $table->unsignedInteger('server_id')->nullable()->after('id');
-            $table->foreign('server_id')->references('id')->on('servers')->onDelete('cascade');
+            if (!Schema::hasColumn('custom_buttons', 'server_id')) {
+                $table->unsignedInteger('server_id')->nullable()->after('id');
+                $table->foreign('server_id')->references('id')->on('servers')->onDelete('cascade');
+            }
         });
     }
 

@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('custom_sidebar_items')) {
+            return;
+        }
+
         Schema::create('custom_sidebar_items', function (Blueprint $table) {
             $table->id();
             $table->string('label');

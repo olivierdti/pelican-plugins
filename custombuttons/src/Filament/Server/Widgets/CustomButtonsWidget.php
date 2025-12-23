@@ -7,6 +7,7 @@ use Filament\Facades\Filament;
 use Filament\Support\Enums\Size;
 use Filament\Widgets\Widget;
 use Olivier\CustomButtons\Models\CustomButton;
+use Olivier\CustomButtons\Services\UrlTemplateParser;
 
 class CustomButtonsWidget extends Widget
 {
@@ -32,7 +33,7 @@ class CustomButtonsWidget extends Widget
                     ->label($button->text)
                     ->icon($button->icon ?? 'tabler-link')
                     ->color($button->color)
-                    ->url($button->url, $button->new_tab)
+                    ->url(UrlTemplateParser::parse($button->url, $server), $button->new_tab)
                     ->size(Size::ExtraLarge)
                 )->all();
         } catch (\Exception $e) {

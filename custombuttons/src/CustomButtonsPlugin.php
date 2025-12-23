@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Schema;
 use Olivier\CustomButtons\Models\CustomButton;
 use Olivier\CustomButtons\Models\CustomSidebarItem;
 use Olivier\CustomButtons\Services\FeatureChecker;
+use Olivier\CustomButtons\Services\UrlTemplateParser;
 
 use function Filament\Facades\Filament as FilamentFacade;
 
@@ -48,8 +49,12 @@ class CustomButtonsPlugin implements HasPluginSettings, Plugin
             $items = [];
             foreach (CustomSidebarItem::active()->orderBy('sort')->get() as $item) {
                 $itemFeature = $item->feature;
+                $itemUrl = $item->url;
                 $navItem = \Filament\Navigation\NavigationItem::make($item->label)
-                    ->url($item->url)
+                    ->url(function () use ($itemUrl) {
+                        $currentServer = \Filament\Facades\Filament::getTenant();
+                        return $currentServer ? UrlTemplateParser::parse($itemUrl, $currentServer) : $itemUrl;
+                    })
                     ->sort($item->sort)
                     ->visible(function () use ($itemFeature) {
                         if (!$itemFeature) {
@@ -77,13 +82,19 @@ class CustomButtonsPlugin implements HasPluginSettings, Plugin
             // Global console buttons
             foreach (CustomButton::active()->global()->orderBy('sort')->get() as $button) {
                 $buttonFeature = $button->feature;
+                $buttonUrl = $button->url;
+                $buttonNewTab = $button->new_tab;
+                
                 Console::registerCustomHeaderActions(
                     HeaderActionPosition::Before,
                     Action::make("global_button_{$button->id}")
                         ->label($button->text)
                         ->icon($button->icon ?? 'tabler-link')
                         ->color($button->color)
-                        ->url($button->url, $button->new_tab)
+                        ->url(function () use ($buttonUrl) {
+                            $currentServer = \Filament\Facades\Filament::getTenant();
+                            return $currentServer ? UrlTemplateParser::parse($buttonUrl, $currentServer) : $buttonUrl;
+                        }, $buttonNewTab)
                         ->size(Size::ExtraLarge)
                         ->visible(function () use ($buttonFeature) {
                             if (!$buttonFeature) {

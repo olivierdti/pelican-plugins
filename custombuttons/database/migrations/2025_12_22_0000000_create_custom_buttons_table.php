@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('custom_buttons')) {
+            return;
+        }
+
         Schema::create('custom_buttons', function (Blueprint $table) {
             $table->id();
             $table->string('text');

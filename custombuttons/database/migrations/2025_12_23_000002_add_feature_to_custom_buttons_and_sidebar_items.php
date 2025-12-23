@@ -1,4 +1,4 @@
-<?php
+    <?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -8,13 +8,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('custom_buttons', function (Blueprint $table) {
-            $table->string('feature')->nullable()->after('server_id');
-        });
+        if (Schema::hasTable('custom_buttons')) {
+            Schema::table('custom_buttons', function (Blueprint $table) {
+                if (!Schema::hasColumn('custom_buttons', 'feature')) {
+                    $table->string('feature')->nullable()->after('is_active');
+                }
+            });
+        }
 
-        Schema::table('custom_sidebar_items', function (Blueprint $table) {
-            $table->string('feature')->nullable()->after('is_active');
-        });
+        if (Schema::hasTable('custom_sidebar_items')) {
+            Schema::table('custom_sidebar_items', function (Blueprint $table) {
+                if (!Schema::hasColumn('custom_sidebar_items', 'feature')) {
+                    $table->string('feature')->nullable()->after('is_active');
+                }
+            });
+        }
     }
 
     public function down(): void
