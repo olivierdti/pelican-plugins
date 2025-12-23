@@ -2,37 +2,30 @@
 
 namespace Olivier\CustomButtons\Providers;
 
-use App\Enums\HeaderActionPosition;
+use App\Enums\ConsoleWidgetPosition;
 use App\Filament\Server\Pages\Console;
+use App\Models\Subuser;
 use Illuminate\Support\ServiceProvider;
-use Olivier\CustomButtons\Models\CustomButton;
+use Olivier\CustomButtons\Filament\Server\Widgets\CustomButtonsWidget;
 
 class CustomButtonsPluginProvider extends ServiceProvider
 {
     public function register(): void
     {
+        Subuser::registerCustomPermissions('custombuttons', [
+            'view',
+            'create',
+            'edit',
+            'delete',
+        ], 'tabler-layout-grid-add', false);
+        
+        Console::registerCustomWidgets(
+            ConsoleWidgetPosition::AboveConsole,
+            [CustomButtonsWidget::class]
+        );
     }
 
     public function boot(): void
     {
-        try {
-            // Register custom buttons from database
-            $buttons = CustomButton::active()->get();
-            
-            foreach ($buttons as $button) {
-                Console::registerCustomHeaderActions(
-                    HeaderActionPosition::After,
-                    \Olivier\CustomButtons\Filament\Components\Actions\CustomButtonAction::make("custom_button_{$button->id}")
-                        ->buttonData([
-                            'text' => $button->text,
-                            'url' => $button->url,
-                            'icon' => $button->icon,
-                            'color' => $button->color,
-                            'new_tab' => $button->new_tab,
-                        ])
-                );
-            }
-        } catch (\Exception $e) {
-        }
     }
 }

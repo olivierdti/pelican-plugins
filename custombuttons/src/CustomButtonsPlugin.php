@@ -3,13 +3,19 @@
 namespace Olivier\CustomButtons;
 
 use App\Contracts\Plugins\HasPluginSettings;
+use App\Enums\HeaderActionPosition;
+use App\Filament\Server\Pages\Console;
+use Filament\Actions\Action;
 use Filament\Contracts\Plugin;
 use Filament\Notifications\Notification;
 use Filament\Panel;
-use Illuminate\Support\Facades\Log;
+use Filament\Support\Enums\Size;
 use Illuminate\Support\Facades\Schema;
 use Olivier\CustomButtons\Models\CustomButton;
 use Olivier\CustomButtons\Models\CustomSidebarItem;
+use Olivier\CustomButtons\Services\FeatureChecker;
+
+use function Filament\Facades\Filament as FilamentFacade;
 
 class CustomButtonsPlugin implements HasPluginSettings, Plugin
 {
@@ -21,6 +27,12 @@ class CustomButtonsPlugin implements HasPluginSettings, Plugin
 
     public function register(Panel $panel): void
     {
+        if ($panel->getId() === 'server') {
+            $panel->discoverResources(
+                plugin_path($this->getId(), 'src/Filament/Server/Resources'),
+                'Olivier\\CustomButtons\\Filament\\Server\\Resources'
+            );
+        }
     }
 
     public function boot(Panel $panel): void
@@ -30,28 +42,57 @@ class CustomButtonsPlugin implements HasPluginSettings, Plugin
         }
 
         try {
-            $sidebarItems = CustomSidebarItem::active()->get();
+            $server = \Filament\Facades\Filament::getTenant();
             
-            if ($sidebarItems->isNotEmpty()) {
-                $items = [];
-                
-                foreach ($sidebarItems as $item) {
-                    $navItem = \Filament\Navigation\NavigationItem::make($item->label)
-                        ->url($item->url)
-                        ->sort($item->sort);
+            // Sidebar items
+            $items = [];
+            foreach (CustomSidebarItem::active()->orderBy('sort')->get() as $item) {
+                $itemFeature = $item->feature;
+                $navItem = \Filament\Navigation\NavigationItem::make($item->label)
+                    ->url($item->url)
+                    ->sort($item->sort)
+                    ->visible(function () use ($itemFeature) {
+                        if (!$itemFeature) {
+                            return true;
+                        }
+                        $currentServer = \Filament\Facades\Filament::getTenant();
+                        return $currentServer && FeatureChecker::hasFeature($currentServer, $itemFeature);
+                    });
 
-                    if (!empty($item->icon)) {
-                        $navItem->icon($item->icon);
-                    }
-
-                    if ($item->new_tab) {
-                        $navItem->openUrlInNewTab();
-                    }
-
-                    $items[] = $navItem;
+                if ($item->icon) {
+                    $navItem->icon($item->icon);
                 }
-                
+
+                if ($item->new_tab) {
+                    $navItem->openUrlInNewTab();
+                }
+
+                $items[] = $navItem;
+            }
+            
+            if ($items) {
                 $panel->navigationItems($items);
+            }
+            
+            // Global console buttons
+            foreach (CustomButton::active()->global()->orderBy('sort')->get() as $button) {
+                $buttonFeature = $button->feature;
+                Console::registerCustomHeaderActions(
+                    HeaderActionPosition::Before,
+                    Action::make("global_button_{$button->id}")
+                        ->label($button->text)
+                        ->icon($button->icon ?? 'tabler-link')
+                        ->color($button->color)
+                        ->url($button->url, $button->new_tab)
+                        ->size(Size::ExtraLarge)
+                        ->visible(function () use ($buttonFeature) {
+                            if (!$buttonFeature) {
+                                return true;
+                            }
+                            $currentServer = \Filament\Facades\Filament::getTenant();
+                            return $currentServer && FeatureChecker::hasFeature($currentServer, $buttonFeature);
+                        })
+                );
             }
         } catch (\Exception $e) {
         }
@@ -70,7 +111,6 @@ class CustomButtonsPlugin implements HasPluginSettings, Plugin
                     \Filament\Forms\Components\TextInput::make('url')
                         ->label('Button URL')
                         ->required()
-                        ->url()
                         ->maxLength(255),
                     \Filament\Forms\Components\TextInput::make('icon')
                         ->label('Icon (Tabler icon name)')
@@ -93,6 +133,11 @@ class CustomButtonsPlugin implements HasPluginSettings, Plugin
                         ->numeric()
                         ->default(0)
                         ->helperText('Lower numbers appear first'),
+                    \Filament\Forms\Components\TextInput::make('feature')
+                        ->label('Required Feature')
+                        ->placeholder('e.g., eula, geyser')
+                        ->helperText('Only show this button if server egg has this feature')
+                        ->maxLength(255),
                     \Filament\Forms\Components\Toggle::make('new_tab')
                         ->label('Open in new tab')
                         ->default(true)
@@ -117,7 +162,6 @@ class CustomButtonsPlugin implements HasPluginSettings, Plugin
                     \Filament\Forms\Components\TextInput::make('url')
                         ->label('URL')
                         ->required()
-                        ->url()
                         ->maxLength(255),
                     \Filament\Forms\Components\TextInput::make('icon')
                         ->label('Icon (Tabler icon name)')
@@ -129,6 +173,11 @@ class CustomButtonsPlugin implements HasPluginSettings, Plugin
                         ->numeric()
                         ->default(50)
                         ->helperText('Lower numbers appear first'),
+                    \Filament\Forms\Components\TextInput::make('feature')
+                        ->label('Required Feature')
+                        ->placeholder('e.g., eula, geyser')
+                        ->helperText('Only show this item if server egg has this feature')
+                        ->maxLength(255),
                     \Filament\Forms\Components\Toggle::make('new_tab')
                         ->label('Open in new tab')
                         ->default(false)
@@ -153,20 +202,17 @@ class CustomButtonsPlugin implements HasPluginSettings, Plugin
                 return [];
             }
             
-            return CustomButton::orderBy('sort')
-                ->get()
-                ->map(fn ($button) => [
-                    'text' => $button->text,
-                    'url' => $button->url,
-                    'icon' => $button->icon,
-                    'color' => $button->color,
-                    'new_tab' => $button->new_tab,
-                    'sort' => $button->sort,
-                    'is_active' => $button->is_active,
-                ])
-                ->toArray();
+            return CustomButton::global()->get()->map(fn ($button) => [
+                'text' => $button->text,
+                'url' => $button->url,
+                'icon' => $button->icon,
+                'color' => $button->color,
+                'new_tab' => $button->new_tab,
+                'sort' => $button->sort,
+                'is_active' => $button->is_active,
+                'feature' => $button->feature,
+            ])->toArray();
         } catch (\Exception $e) {
-            Log::error('CustomButtonsPlugin loadButtons error: ' . $e->getMessage());
             return [];
         }
     }
@@ -178,19 +224,16 @@ class CustomButtonsPlugin implements HasPluginSettings, Plugin
                 return [];
             }
             
-            return CustomSidebarItem::orderBy('sort')
-                ->get()
-                ->map(fn ($item) => [
-                    'label' => $item->label,
-                    'url' => $item->url,
-                    'icon' => $item->icon,
-                    'sort' => $item->sort,
-                    'new_tab' => $item->new_tab,
-                    'is_active' => $item->is_active,
-                ])
-                ->toArray();
+            return CustomSidebarItem::orderBy('sort')->get()->map(fn ($item) => [
+                'label' => $item->label,
+                'url' => $item->url,
+                'icon' => $item->icon,
+                'sort' => $item->sort,
+                'new_tab' => $item->new_tab,
+                'is_active' => $item->is_active,
+                'feature' => $item->feature,
+            ])->toArray();
         } catch (\Exception $e) {
-            Log::error('CustomButtonsPlugin loadSidebarItems error: ' . $e->getMessage());
             return [];
         }
     }
@@ -198,63 +241,47 @@ class CustomButtonsPlugin implements HasPluginSettings, Plugin
     public function saveSettings(array $data): void
     {
         try {
-            if (!Schema::hasTable('custom_buttons')) {
-                throw new \Exception('Table custom_buttons does not exist. Please run migrations.');
-            }
-            
-            if (!Schema::hasTable('custom_sidebar_items')) {
-                throw new \Exception('Table custom_sidebar_items does not exist. Please run migrations.');
+            if (!Schema::hasTable('custom_buttons') || !Schema::hasTable('custom_sidebar_items')) {
+                throw new \Exception('Required tables do not exist. Please run migrations.');
             }
 
-            CustomButton::truncate();
-            CustomSidebarItem::truncate();
+            \Illuminate\Support\Facades\DB::transaction(function () use ($data) {
+                CustomButton::global()->delete();
+                CustomSidebarItem::truncate();
 
-            foreach ($data['buttons'] ?? [] as $button) {
-                $buttonData = array_intersect_key($button, array_flip([
-                    'text', 'url', 'icon', 'color', 'new_tab', 'sort', 'is_active'
-                ]));
-                
-                if (empty($buttonData['text']) || empty($buttonData['url'])) {
-                    continue;
-                }
-                
-                if (isset($buttonData['new_tab'])) {
-                    $buttonData['new_tab'] = (bool) $buttonData['new_tab'];
-                }
-                if (isset($buttonData['is_active'])) {
-                    $buttonData['is_active'] = (bool) $buttonData['is_active'];
-                }
-                
-                $buttonData['color'] = $buttonData['color'] ?? 'primary';
-                $buttonData['sort'] = $buttonData['sort'] ?? 0;
-                $buttonData['new_tab'] = $buttonData['new_tab'] ?? true;
-                $buttonData['is_active'] = $buttonData['is_active'] ?? true;
-                
-                CustomButton::create($buttonData);
-            }
+                $allowedButtonFields = ['text', 'url', 'icon', 'color', 'new_tab', 'sort', 'is_active', 'feature'];
+                $allowedItemFields = ['label', 'url', 'icon', 'sort', 'new_tab', 'is_active', 'feature'];
 
-            foreach ($data['sidebar_items'] ?? [] as $item) {
-                $itemData = array_intersect_key($item, array_flip([
-                    'label', 'url', 'icon', 'sort', 'new_tab', 'is_active'
-                ]));
-                
-                if (empty($itemData['label']) || empty($itemData['url'])) {
-                    continue;
+                foreach ($data['buttons'] ?? [] as $button) {
+                    $buttonData = array_intersect_key($button, array_flip($allowedButtonFields));
+                    
+                    if (empty($buttonData['text']) || empty($buttonData['url'])) {
+                        continue;
+                    }
+                    
+                    CustomButton::create(array_merge([
+                        'server_id' => null,
+                        'color' => 'primary',
+                        'sort' => 0,
+                        'new_tab' => true,
+                        'is_active' => true,
+                    ], $buttonData));
                 }
-                
-                if (isset($itemData['new_tab'])) {
-                    $itemData['new_tab'] = (bool) $itemData['new_tab'];
+
+                foreach ($data['sidebar_items'] ?? [] as $item) {
+                    $itemData = array_intersect_key($item, array_flip($allowedItemFields));
+                    
+                    if (empty($itemData['label']) || empty($itemData['url'])) {
+                        continue;
+                    }
+                    
+                    CustomSidebarItem::create(array_merge([
+                        'sort' => 50,
+                        'new_tab' => false,
+                        'is_active' => true,
+                    ], $itemData));
                 }
-                if (isset($itemData['is_active'])) {
-                    $itemData['is_active'] = (bool) $itemData['is_active'];
-                }
-                
-                $itemData['sort'] = $itemData['sort'] ?? 50;
-                $itemData['new_tab'] = $itemData['new_tab'] ?? false;
-                $itemData['is_active'] = $itemData['is_active'] ?? true;
-                
-                CustomSidebarItem::create($itemData);
-            }
+            });
             
             Notification::make()
                 ->title('Settings saved')
@@ -266,16 +293,6 @@ class CustomButtonsPlugin implements HasPluginSettings, Plugin
                 ->body($e->getMessage())
                 ->danger()
                 ->send();
-            
-            Log::error('CustomButtonsPlugin saveSettings error: ' . $e->getMessage(), [
-                'exception' => $e,
-                'data' => $data
-            ]);
         }
-    }
-
-    public static function getButtons()
-    {
-        return CustomButton::active()->get();
     }
 }

@@ -22,6 +22,7 @@ class CustomSidebarItem extends Model
         'sort',
         'new_tab',
         'is_active',
+        'feature',
     ];
 
     protected $casts = [
@@ -32,6 +33,6 @@ class CustomSidebarItem extends Model
 
     public function scopeActive($query)
     {
-        return $query->where('is_active', true)->orderBy('sort');
+        return $query->where('is_active', true);
     }
 }
