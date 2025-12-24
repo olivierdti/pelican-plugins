@@ -23,6 +23,3 @@ Alternatively, look at the [**Releases**](https://github.com/olivierdti/pelican-
 
 Feel free to contribute to these plugins via pull requests! If you find any bugs or have feature requests, please open an issue.
 
-## License
-
-All plugins are open-source and available under the GPL-3.0 license.
