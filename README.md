@@ -4,9 +4,13 @@ A collection of plugins for the [Pelican Panel](https://pelican.dev/). All plugi
 
 ## How to install plugins
 
-[Download the repository archive](https://github.com/olivierdti/pelican-plugins/archive/refs/heads/main.zip) and extract the folders of the plugins you want to install to your panel's `plugins` folder (`/var/www/pelican/plugins` by default). Finally, open your panel and head to the plugins page and click "Install".
+1. Download the plugin ZIP file from the [Releases](https://github.com/olivierdti/pelican-plugins/releases) page
+2. Go to your Pelican Panel admin area
+3. Navigate to the Plugins page
+4. Click on "Import file"
+5. Select the downloaded ZIP file
+6. Click "Import"
 
-Alternatively, look at the [**Releases**](https://github.com/olivierdti/pelican-plugins/releases) tab where you can find direct download URLs for each plugin.
 
 ## Plugins
 
