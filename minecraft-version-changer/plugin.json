@@ -1,0 +1,11 @@
+{
+    "id": "minecraft-version-changer",
+    "name": "Minecraft Version Changer",
+    "author": "Olivier D.",
+    "version": "1.0.0",
+    "description": "Quickly change Minecraft server version using MCJars API",
+    "category": "plugin",
+    "namespace": "Olivier\\MinecraftVersionChanger",
+    "class": "MinecraftVersionChangerPlugin",
+    "panels": ["server"]
+}
