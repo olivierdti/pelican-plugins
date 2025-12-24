@@ -1,30 +1,28 @@
-# Pelican Plugins by olivierdti
-All plugins are open-source and made by **olivierdti**.<br> Make changes via a _pull request_ and help us, to keep all plugins fresh!
+# Pelican Plugins
 
-## How to install my plugins
-Look at the [**Releases**](https://github.com/olivierdti/pelican-plugins/releases) tab, there you can find the **URL** (in the version) that you can paste into your  Pelican panel.
+A collection of plugins for the [Pelican Panel](https://pelican.dev/). All plugins are open-source and made by **olivierdti**.
 
-# Plugin list
-## [All-servers default](/allserverdefault) <sup><sub>by olivierdti</sub></sup>
+## How to install plugins
 
-Makes the `All servers` option the default one.
-> [!TIP]
-> This plugin is ready to use!
+[Download the repository archive](https://github.com/olivierdti/pelican-plugins/archive/refs/heads/main.zip) and extract the folders of the plugins you want to install to your panel's `plugins` folder (`/var/www/pelican/plugins` by default). Finally, open your panel and head to the plugins page and click "Install".
 
-## [Catppuccin Theme](/catppuccin-theme) <sup><sub>by olivierdti</sub></sup>
+Alternatively, look at the [**Releases**](https://github.com/olivierdti/pelican-plugins/releases) tab where you can find direct download URLs for each plugin.
 
-A cute, little theme for Pelican panel.
-> [!TIP]
-> This theme is ready to use!
+## Plugins
 
-## [Custom Buttons](/custombuttons) <sup><sub>by olivierdti</sub></sup>
+- [**All-servers default**](allserverdefault) - Makes the `All servers` option the default one
+- [**Custom Buttons**](custombuttons) - Create custom buttons and sidebar items in the server panel
+- [**Enhanced Server Sorter**](enhancedserversorter) - Advanced server organization system with folder management
+- [**Minecraft Version Changer**](minecraft-version-changer) - Download and install different Minecraft server versions
 
-Create custom buttons in the server-view.
-> [!TIP]
-> This plugin is ready to use!
+## Themes
 
-## [Enhanced Server Sorter](/enhancedserversorter) <sup><sub>by olivierdti</sub></sup>
+- [**Catppuccin Theme**](catppuccin-theme) - A cute, little theme for Pelican panel
 
-A server sorter in the admin dashboard.
-> [!TIP]
-> This plugin is ready to use! It includes default folders and locking features.
+## Contributing
+
+Feel free to contribute to these plugins via pull requests! If you find any bugs or have feature requests, please open an issue.
+
+## License
+
+All plugins are open-source and available under the GPL-3.0 license.
