@@ -32,6 +32,8 @@ Download and install different Minecraft server versions directly from the panel
 5. Select the downloaded ZIP file
 6. Click "Import"
 
+7. In your Minecraft server's Egg, add a feature tag named `mcversionchanger` so the **MC Version** menu appears in the server panel.
+
 ## Usage
 
 1. Navigate to the server panel
