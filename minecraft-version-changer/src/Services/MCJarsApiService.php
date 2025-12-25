@@ -62,8 +62,12 @@ class MCJarsApiService
     /**
      * Get available versions for a specific server type from MCJars API
      */
-    public function getVersions(string $type): array
+    public function getVersions(?string $type): array
     {
+        if ($type === null) {
+            return [];
+        }
+        
         $typeUpper = strtoupper($type);
         
         return Cache::remember("mcjars.versions.{$typeUpper}", $this->cacheDuration, function () use ($typeUpper) {
@@ -102,8 +106,12 @@ class MCJarsApiService
     /**
      * Get available builds for a specific server type and version from MCJars API
      */
-    public function getBuilds(string $type, string $version): array
+    public function getBuilds(?string $type, ?string $version): array
     {
+        if ($type === null || $version === null) {
+            return [];
+        }
+        
         $typeUpper = strtoupper($type);
         
         try {
@@ -131,8 +139,12 @@ class MCJarsApiService
     /**
      * Get download URL for a specific version using MCJars API
      */
-    public function getDownloadUrl(string $type, string $version, ?string $projectVersionId = null): ?string
+    public function getDownloadUrl(?string $type, ?string $version, ?string $projectVersionId = null): ?string
     {
+        if ($type === null || $version === null) {
+            return null;
+        }
+        
         $typeUpper = strtoupper($type);
         
         try {
