@@ -1,8 +1,6 @@
 <?php
 
 return [
-    // Traductions compatibles avec le système de permissions Pelican
-    // Format: 'permission_group_permission_name'
     'custombuttons_desc' => 'Permissions that control a user\'s ability to manage custom buttons.',
     'custombuttons_view' => 'Allows the user to view the Custom Buttons navigation and page.',
     'custombuttons_create' => 'Allows the user to create new custom buttons.',

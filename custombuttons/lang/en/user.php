@@ -1,7 +1,5 @@
 <?php
 
-// Traductions pour les permissions subuser Custom Buttons
-// Ces traductions doivent être fusionnées avec le fichier server/user.php de Pelican
 
 return [
     'permissions' => [
