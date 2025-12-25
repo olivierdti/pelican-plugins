@@ -7,5 +7,6 @@
     "category": "theme",
     "url": "https://github.com/olivierdti/pelican-plugins/tree/main/catppuccin-theme",
     "namespace": "Olivier\\CatppuccinTheme",
-    "class": "CatppuccinThemePlugin"
+    "class": "CatppuccinThemePlugin",
+    "update_url": "https://raw.githubusercontent.com/olivierdti/pelican-plugins/main/updates/catppuccin-theme/update.json"
 }
